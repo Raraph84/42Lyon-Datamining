@@ -1,0 +1,62 @@
+#!/bin/bash
+
+function exam_mode_authorization() {
+    if [ "$USER" != "exam" ]; then
+		echo Access denied
+        zenity --error --title="Exam Workstation" --text="Login denied.\n\nThis workstation is reserved for exam sessions."
+        exit 1
+    fi
+
+	echo Access granted
+}
+
+function disco_mode_authorization() {
+    local authorized_users=(
+            "acartet"
+            "afehri"
+            "alanseur"
+            "alestefa"
+            "becoutan"
+            "camiri-m"
+            "cdelfoss"
+            "dassaud"
+            "dgrimald"
+            "echatill"
+            "edugas"
+            "ersilva"
+            "flevy"
+            "hhaib"
+            "jzhu-cha"
+            "kkassimi"
+            "ktahir-t"
+            "lopompon"
+            "lyblanch"
+            "maugeard"
+            "mlaroche"
+            "mmanzago"
+            "mufadel"
+            "nmejia-d"
+            "sokhatch"
+            "spantic"
+            "vbruno"
+            "vfincato"
+            "ypacahua"
+            "pillo"
+        )
+    local is_authorized=false
+
+    for authorized_user in "${authorized_users[@]}"; do
+        if [ "$USER" == "$authorized_user" ]; then
+            is_authorized=true
+            break
+        fi
+    done
+
+    if [ "$is_authorized" != true ]; then
+		echo Access denied
+        zenity --error --title="Discovery Piscine" --text="Login denied.\n\nThis workstation is reserved for Discovery Piscine participants."
+        exit 1
+    fi
+
+	echo Access granted
+}

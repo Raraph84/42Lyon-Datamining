@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Prevent VirtualBox from spoofing the default ip address
+fw_antispoof() {
+    local default_if=$(ip route | awk '/default/{print $5}')
+    local default_ip=$(ip route | awk '/default/{print $9}')
+    nft add table ip raw 2>/dev/null
+    nft add chain ip raw OUTPUT '{ type filter hook output priority -300; policy accept; }' 2>/dev/null
+    local rule_pattern="oifname \"$default_if\" ip saddr != $default_ip drop"
+    if ! nft list chain ip raw OUTPUT 2>/dev/null | grep -Fq "$rule_pattern"; then
+        nft insert rule ip raw OUTPUT oifname "$default_if" ip saddr != "$default_ip" drop
+    fi
+}

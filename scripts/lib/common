@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+if [[ -v __COMMON__ ]];then
+    return
+else
+    __COMMON__=true
+fi
+
+source "$LIB_ROOT/env"
+
+init () {
+
+    # Exit if not a user trigger the script
+    if [[ ! -v USER ]];then
+        echo "Skip system process"
+        exit 0
+    fi
+
+    # Bypass script for a list of users
+
+    if printf '%s\n' "${BYPASS_USERS[@]}" | grep -qx "$USER"; then
+        echo "Login bypass for user: $USER"
+        exit 0
+    fi
+}

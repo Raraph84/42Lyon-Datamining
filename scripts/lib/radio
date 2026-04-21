@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+if [[ -v __RADIO__ ]];then
+    return
+else
+    __RADIO__=true
+fi
+
+radio_disable () {
+    case "$(dmidecode -s system-manufacturer)" in
+        "Dell Inc.")
+            modprobe -r iwlwifi || true
+            modprobe -r btusb || true
+            ;;
+        "Apple Inc.")
+            modprobe -r hci_uart || true
+            ;;
+    esac
+}
+
+radio_enable () {
+    case "$(dmidecode -s system-manufacturer)" in
+        "Dell Inc.")
+            modprobe iwlwifi || true
+            modprobe btusb || true
+            ;;
+        "Apple Inc.")
+            modprobe hci_uart || true
+            ;;
+    esac
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [[ -v __ENV__ ]];then
+    return
+else
+    __ENV__=true
+fi
+
+BYPASS_USERS=("bocal" "event")
+SENTRY_DSN="https://fa9db6cdbd4342cc8ad2ee01de999d68@sentry-campus.42.fr/6"
+SGOINFRE_SERVER="sgoinfre.42lyon.fr"

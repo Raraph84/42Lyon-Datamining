@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+if [[ -v __HOME__ ]];then
+    return
+else
+    __HOME__=true
+fi
+
+home_clean () {
+    if [ -f "$HOME/.reset" ]; then
+		echo "Resetting home directory: $HOME"
+		find "$HOME/" -mindepth 1 -delete
+		zenity --info --title="Home Reset" --text="Your home directory has been reset." --no-wrap &
+	elif [ -d $HOME ]; then
+		echo "Cleaning cache"
+		find $HOME/ -maxdepth 1 -type d -name .cache -exec rm -rf '{}' + || true
+		find $HOME/.config/ -name 'Singleton*' -delete || true
+	fi
+}

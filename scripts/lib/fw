@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+if [[ -v __FW__ ]];then
+    return
+else
+    __FW__=true
+fi
+
+fw_exam () {
+    sysctl -w net.ipv6.conf.all.disable_ipv6=0
+    nft -f /etc/nftables_exam.conf
+
+    nft list table inet exam &>/dev/null && nft flush table inet exam
+
+    nft add table inet exam 2>/dev/null
+    nft add chain inet exam exam_input { type filter hook input priority filter \; policy accept \; } 2>/dev/null
+    nft add chain inet exam exam_output { type filter hook output priority filter \; policy accept \; } 2>/dev/null
+
+    LO_PORTS=$(ss -tulnH | awk '{split($5,a,":"); print $1 ":" a[length(a)]}' | sort -u | grep -v 53)
+
+    for port_proto in $LO_PORTS; do
+        proto="${port_proto%%:*}"
+        port="${port_proto##*:}"
+        nft add rule inet exam exam_input iif "lo" $proto dport $port drop
+        nft add rule inet exam exam_output oif "lo" $proto sport $port drop
+    done
+}
+
+fw_user () {
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1
+    nft -f /etc/nftables.conf
+}

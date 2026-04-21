@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+if [[ -v __DOCKER__ ]];then
+    return
+else
+    __DOCKER__=true
+fi
+
+docker_subuid_setup() {
+    local user_id=$((100000 + $(id -u "$USER")))
+    for file in /etc/subuid /etc/subgid; do
+        grep -q "^$USER:" "$file" 2>/dev/null || echo "$USER:$user_id:65536" >> "$file"
+    done
+}
+
+
+docker_setup() {
+    mkdir -p "$HOME/.config/docker" "/goinfre/$USER/docker"
+
+    cat > "$HOME/.config/docker/daemon.json" <<EOF
+{
+    "data-root": "/goinfre/$USER/docker/",
+    "registry-mirrors": ["https://nexus.42lyon.fr:5000"]
+}
+EOF
+    export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
+    dockerd-rootless-setuptool.sh install
+}

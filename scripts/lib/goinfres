@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+if [[ -v __GOINFRES__ ]];then
+    return
+else
+    __GOINFRES__=true
+fi
+
+goinfre_mount() {
+    mount /goinfre || true
+}
+
+goinfre_umount() {
+    umount /goinfre || true
+}
+
+goinfre_setup() {
+    if [ ! -d "/goinfre" ]; then
+        return
+	fi
+
+    if [ -d "/goinfre" ] && [ -w "/goinfre" ] && [ ! -e "/goinfre/$USER" ]; then
+        echo "Creating directory at /goinfre/$USER"
+        mkdir -m 700 "/goinfre/$USER"
+        chown "$USER:$(id -gn $USER)" "/goinfre/$USER"
+    fi
+
+    if [ ! -e "$HOME/goinfre" ] && [ -e "/goinfre/$USER" ]; then
+        ln -vns "/goinfre/$USER" "$HOME/goinfre"
+    fi
+}
+
+sgoinfre_mount() {
+    mount /sgoinfre || true
+}
+
+sgoinfre_umount() {
+    umount /sgoinfre || true
+}
+
+sgoinfre_setup() {
+    if [ ! -d "/sgoinfre" ]; then
+        return
+	fi
+    if [ -d "/sgoinfre" ] && [ -w "/sgoinfre" ] && [ ! -e "/sgoinfre/$USER" ]; then
+        echo "Creating directory at /sgoinfre/$USER"
+        mkdir -m 700 "/sgoinfre/$USER"
+        chown "$USER:$(id -gn $USER)" "/sgoinfre/$USER"
+    fi
+
+    if [ ! -e "$HOME/sgoinfre" ] && [ -e "/sgoinfre/$USER" ]; then
+        ln -vns "/sgoinfre/$USER" "$HOME/sgoinfre"
+    fi
+}

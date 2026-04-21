@@ -1,0 +1,7 @@
+#!/bin/bash
+
+function discord_setup() {
+    /usr/bin/mkdir -vp "$HOME/.config/discord"
+
+    echo "{\"SKIP_HOST_UPDATE\": true}" > "$HOME/.config/discord/settings.json"
+}

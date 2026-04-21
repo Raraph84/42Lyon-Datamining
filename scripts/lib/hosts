@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+if [[ -v __HOSTS__ ]];then
+    return
+else
+    __HOSTS__=true
+fi
+
+hosts_restore() {
+    # Restore original /etc/hosts
+    if [ -e /etc/hosts.origin ]; then
+        cp /etc/hosts.origin /etc/hosts
+        rm /etc/hosts.origin
+    fi
+}
+
+hosts_exam() {
+    # backup and force hosts.exam
+    if [ -e /etc/hosts.origin ]; then
+        echo "/etc/hosts.origin already exist"
+    else
+        cp /etc/hosts /etc/hosts.origin
+    fi
+    
+    cp /etc/hosts.exam /etc/hosts
+}

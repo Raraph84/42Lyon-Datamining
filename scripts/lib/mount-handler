@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+
+if [[ -v __MOUNT_HANDLER__ ]];then
+    return
+else
+    __MOUNT_HANDLER__=true
+fi
+
+# Error message for cache file not found
+ERR_CACHE_FILE_NOT_FOUND="Cache file not found"
+
+# Function to find the user-specific cache file
+find_user_cache_file() {
+  local cache_file_path="$1"
+  local uid="$2"
+
+  # Search in /tmp directory for user-specific cache files named krb5cc_<uid>*
+  local search_dir="/tmp"
+  local user_cache_file=$(find "$search_dir" -maxdepth 1 -type f -name "krb5cc_pam_*" 2>/dev/null | head -n 1)
+
+  if [ -n "$user_cache_file" ]; then
+    echo "$user_cache_file"
+    return 0
+  fi
+
+  echo "$ERR_CACHE_FILE_NOT_FOUND"
+  return 1
+}
+
+# Function to extract the first domain from the [domain_realm] section in krb5.conf
+get_domain_realm() {
+  domain_realm=$(awk '/\[domain_realm\]/,/^$/{ if ($1 !~ /\[.*\]/ && $1 != "" && $1 ~ /^[.]/) print $1 }' /etc/krb5.conf | head -n 1)
+
+  if [ -z "$domain_realm" ]; then
+    echo "Error: Unable to extract domain_realm from /etc/krb5.conf"
+    exit 1
+  fi
+
+  # Remove leading dot if it exists in the domain name
+  domain_realm=$(echo "$domain_realm" | sed 's/^\.//')
+
+  echo "$domain_realm"
+}
+
+# Extract domain_realm and construct the API URL
+domain_realm=$(get_domain_realm)
+API_URL="https://storage.${domain_realm}/api/v1"
+
+# Get the current user UID
+USER_UID=$(id -u $USER)
+
+# Function to find the Kerberos cache file
+find_kerberos_cache_file() {
+  USER_CACHE=$(find_user_cache_file "/tmp/krb5cc_pam" "$USER_UID")
+  if [ "$USER_CACHE" != "$ERR_CACHE_FILE_NOT_FOUND" ]; then
+    echo "Found User Cache File: $USER_CACHE"
+    export KRB5CCNAME="$USER_CACHE"
+    return 0
+  fi
+
+  echo "Error: Kerberos credentials cache not found"
+  exit 1
+}
+
+# Function to get the IQN for a user's home
+get_user_iqn() {
+  local login="$1"
+
+  # Fetch user's home details using Kerberos authentication
+  response=$(curl -s --negotiate -u : -X GET "$API_URL/homes/$login" \
+    -H "Content-Type: application/json")
+
+  # Extract IQN from response
+  local iqn=$(echo "$response" | jq -r '.exposed_to')
+
+  # Check for errors in response
+  if [[ "$iqn" == "null" || -z "$iqn" ]]; then
+    echo "Error: Unable to find IQN for user '$login'."
+    return 1
+  fi
+
+  echo "$iqn"
+}
+
+# Function to dismount a user's home
+dismount_home() {
+  local login="$1"
+
+  # Find the Kerberos credentials cache
+  find_kerberos_cache_file
+
+  # Get IQN for the user's home
+  local iqn
+  iqn=$(get_user_iqn "$login") || return 1
+
+  # JSON payload for dismounting home
+  local json_payload=$(jq -n --arg login "$login" --arg iqn "$iqn" --argjson force true '{
+    login: $login,
+    iqn: $iqn,
+    force: $force
+  }')
+
+  # Send request to dismount home using Kerberos authentication
+  local response=$(curl -s --negotiate -u : -o /dev/null -w "%{http_code}" -X PUT "$API_URL/homes/umount" \
+    -H "Content-Type: application/json" \
+    -d "$json_payload")
+
+  # Handle response
+  case "$response" in
+    200) echo "Home for user '$login' dismounted successfully." ;;
+    204) echo "Action executed, no data returned." ;;
+    404) zenity --error --title="bocal" --text="Error: No home found for user '$login'." --width=600 && exit 2 ;;
+    409) zenity --error --title="bocal" --text="Error: Conflict, the home might be in use." --width=600 && exit 2 ;;
+    422) zenity --error --title="bocal" --text="Error: Invalid request." --width=600 && exit 2 ;;
+    *) zenity --error --title="bocal" --text="Unexpected error: HTTP status code $response." --width=600 && exit 2 ;;
+  esac
+
+  /usr/sbin/ft-iscsi \
+      -a 443 \
+      -t \
+      -l "$USER" \
+      -P "${ISCSI_STATUS[2]}" \
+      -i "${ISCSI_STATUS[1]}" \
+      -m "${ISCSI_STATUS[3]}" \
+      --gratuitous_umount \
+      --sentry_dsn "https://fa9db6cdbd4342cc8ad2ee01de999d68@sentry-campus.42.fr/6" \
+      mount || RET=$?
+}

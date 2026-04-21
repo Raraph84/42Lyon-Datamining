@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+if [[ -v __CRON__ ]];then
+    return
+else
+    __CRON__=true
+fi
+
+crontab_clean() {
+    # Remove crontab
+    /usr/bin/find /var/spool/cron/crontabs/ \! -user root -type f -exec rm -v {} \;
+}

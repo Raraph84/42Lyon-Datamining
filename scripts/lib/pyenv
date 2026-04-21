@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if [[ -v __PYENV__ ]];then
+    return
+else
+    __PYENV__=true
+fi
+
+pyenv_user_init () {
+    export PYENV_USER_ROOT="$HOME/.pyenv"
+    mkdir -p "$PYENV_USER_ROOT"
+    export PYENV_ROOT="$PYENV_USER_ROOT"
+}

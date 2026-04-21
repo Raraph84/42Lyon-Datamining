@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+if [[ -v __ISCSI__ ]];then
+    return
+else
+    __ISCSI__=true
+fi
+
+source "$LIB_ROOT/mount-handler"
+
+iscsi_get(){
+    # LDAP search
+    LDAPSEARCH=$(ldapsearch -o ldif-wrap=no -xLLL "uid=$USER" status)
+
+    # Extraire status et séparer par ligne
+    status_infos=$(grep -E "^status:" <<< "$LDAPSEARCH" | sed 's/^status: //;s/,/\n/g')
+
+    # valeurs par défaut
+    export iscsi_linux_enabled="false"
+    export iscsi_linux_iqn=""
+    export iscsi_linux_portal=""
+
+    # Lecture ligne par ligne
+    while IFS='=' read -r key value; do
+        case "$key" in
+            iscsi-linux-enabled) iscsi_linux_enabled="$value" ;;
+            iscsi-linux-iqn)     iscsi_linux_iqn="$value" ;;
+            iscsi-linux-portal)  iscsi_linux_portal="$value" ;;
+        esac
+    done <<< "$status_infos"
+}
+
+iscsi_mount () {
+    echo "ft-iscsi: starting mount process"
+    iscsi_get
+
+    /usr/sbin/ft-iscsi \
+        -a 443 \
+        -t \
+        -l "$USER" \
+        -P "$iscsi_linux_portal" \
+        -i "$iscsi_linux_iqn" \
+        -m "$HOME" \
+        --sentry_dsn "$SENTRY_DSN" \
+        mount || RET=$?
+
+    case $RET in
+        "") echo "ft-iscsi successfully mount $USER home" ;;
+        "1") zenity --error --title="bocal" --text="An error occured while mounting your home, please contact a staff member." --width=600 && exit 1 ;;
+        "2")
+                local zen_val=$(DISPLAY=:0 zenity --question --title="bocal" --text="Your home is already mounted somewhere else. Continuing with the login operation could damage your home and corrupt it.\n\nDo you really want to continue the process?" && echo $?)
+                if [ "$zen_val" -eq 0 ] || [ -z "$zen_val" ]; then
+                        echo "$(dismount_home "$USER")"
+                else
+                        exit 2
+                fi
+                ;;
+        *) echo "ft-iscsi return non-zero exit code $RET" && zenity --error --title="bocal" --text="An error occured while mounting your home. (code: $RET)" --width=600 && exit $RET
+
+    esac
+}
+
+iscsi_umount () {
+    echo "ft-iscsi: starting umount process"
+    iscsi_get
+
+    umount -l $HOME
+
+    for attempt in {1..5}; do
+        RET=0
+        /usr/sbin/ft-iscsi \
+            -a 443 \
+            -t \
+            -l "$USER" \
+            -P "$iscsi_linux_portal" \
+            -i "$iscsi_linux_iqn" \
+            -m "$HOME" \
+            --sentry_dsn "$SENTRY_DSN" \
+            umount || RET=$?
+
+        if [ "$RET" -eq 0 ]; then
+            echo "ft-iscsi successfully unmounted $USER's home"
+            break
+        else
+            echo "ft-iscsi returned non-zero exit code (attempt $attempt/5)"
+            if [ $attempt -lt 5 ]; then
+                sleep 10
+            else
+                echo "Failed to unmount after 5 attempts"
+            fi
+        fi
+    done
+}

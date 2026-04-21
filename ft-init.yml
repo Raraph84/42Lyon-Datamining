@@ -1,0 +1,4 @@
+---
+log_level: "debug"
+log_format: "console"
+sentry_dsn: ""

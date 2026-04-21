@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+if [[ -v __EXAM__ ]];then
+    return
+else
+    __EXAM__=true
+fi
+
+source "$LIB_ROOT/radio"
+
+exam_init () {
+    rm -rf $HOME
+        rm -rf /exam
+        rm -rf /tmp/*
+        rm -rf /var/tmp/*
+        rm -rf /tmp/{,.[!.],..?}*
+        rm -rf /var/tmp/{,.[!.],..?}*
+        rm -rf /var/crash/*
+        rm -rf /var/crash/{,.[!.],..?}*
+        rm -rf /var/metrics/*
+        rm -rf /var/metrics/{,.[!.],..?}*
+        rm -rf /var/lib/php/sessions/*
+        rm -rf /var/lib/php/sessions/{,.[!.],..?}*
+        rm -rf /cdrom/*
+        rm -rf /cdrom/{,.[!.],..?}*
+        rm -rf /var/lib/lightdm-data/*
+        cp -rfp /usr/share/42/skel-exam $HOME
+    chown -R "$USER:1042" $HOME
+    radio_disable
+}
+
+exam_clean () {
+    rm -rf $HOME
+}
+
+exam_check_mode () {
+    if [ -e /usr/share/42/.exam ] && [ $USER != 'exam' ]; then
+        zenity --error --title="Exam Mode" --text="Login forbidden.\n\nThis workstation is in exam mode.\nPlease contact a staff member."
+        exit 1
+    fi
+}
