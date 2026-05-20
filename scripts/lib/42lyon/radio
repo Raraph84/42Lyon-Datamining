@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-radio_off() {
-    /usr/bin/nmcli radio wifi off
-    #/usr/bin/bluetoothctl power off
-}

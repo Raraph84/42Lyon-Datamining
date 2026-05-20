@@ -9,8 +9,7 @@ fi
 home_clean () {
     if [ -f "$HOME/.reset" ]; then
 		echo "Resetting home directory: $HOME"
-		find "$HOME/" -mindepth 1 -delete
-		zenity --info --title="Home Reset" --text="Your home directory has been reset." --no-wrap &
+		rm -rf "$HOME/"
 	elif [ -d $HOME ]; then
 		echo "Cleaning cache"
 		find $HOME/ -maxdepth 1 -type d -name .cache -exec rm -rf '{}' + || true
