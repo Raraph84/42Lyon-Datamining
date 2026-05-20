@@ -44,7 +44,7 @@ get_domain_realm() {
 
 # Extract domain_realm and construct the API URL
 domain_realm=$(get_domain_realm)
-API_URL="https://student-storage.${domain_realm}/api/v1"
+API_URL="https://storage.${domain_realm}/api/v1"
 
 # Get the current user UID
 USER_UID=$(id -u $USER)
@@ -65,7 +65,7 @@ find_kerberos_cache_file() {
 # Function to get the IQN for a user's home
 get_user_iqn() {
   local login="$1"
-  
+
   # Fetch user's home details using Kerberos authentication
   response=$(curl -s --negotiate -u : -X GET "$API_URL/homes/$login" \
     -H "Content-Type: application/json")
@@ -85,7 +85,7 @@ get_user_iqn() {
 # Function to dismount a user's home
 dismount_home() {
   local login="$1"
-  
+
   # Find the Kerberos credentials cache
   find_kerberos_cache_file
 
@@ -123,6 +123,6 @@ dismount_home() {
       -i "${ISCSI_STATUS[1]}" \
       -m "${ISCSI_STATUS[3]}" \
       --gratuitous_umount \
-      --sentry_dsn "https://9ff784dc12104887bce102f88424c427@sentry-campus.42.fr/118" \
+      --sentry_dsn "https://fa9db6cdbd4342cc8ad2ee01de999d68@sentry-campus.42.fr/6" \
       mount || RET=$?
 }

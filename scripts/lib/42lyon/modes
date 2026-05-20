@@ -1,0 +1,55 @@
+#!/bin/bash
+
+function access_denied() {
+	echo "Access Denied"
+	zenity --error --title="Forbidden" --text="Access Denied\n\n$1"
+	exit 1
+}
+
+function exam_mode_authorization() {
+	if [ "$USER" != "exam" ]; then
+		access_denied "This workstation is reserved for Exam sessions."
+	fi
+}
+
+function disco_mode_authorization() {
+	local authorized_users=(
+			"cameo"
+			"goudoulf"
+			"pillo"
+			"zippy"
+		)
+	local is_authorized=false
+
+	for authorized_user in "${authorized_users[@]}"; do
+		if [ "$USER" == "$authorized_user" ]; then
+			is_authorized=true
+			break
+		fi
+	done
+
+	if [ "$is_authorized" != true ]; then
+		access_denied "This workstation is reserved for Discovery Piscine participants."
+	fi
+}
+
+function maintenance_mode_authorization() {
+	local authorized_users=(
+			"cameo"
+			"goudoulf"
+			"pillo"
+			"zippy"
+		)
+	local is_authorized=false
+
+	for authorized_user in "${authorized_users[@]}"; do
+		if [ "$USER" == "$authorized_user" ]; then
+			is_authorized=true
+			break
+		fi
+	done
+
+	if [ "$is_authorized" != true ]; then
+		access_denied "This workstation is under maintenance."
+	fi
+}

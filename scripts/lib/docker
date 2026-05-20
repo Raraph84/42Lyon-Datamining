@@ -19,7 +19,8 @@ docker_setup() {
 
     cat > "$HOME/.config/docker/daemon.json" <<EOF
 {
-    "data-root": "/goinfre/$USER/docker/"
+    "data-root": "/goinfre/$USER/docker/",
+    "registry-mirrors": ["https://nexus.42lyon.fr:5000"]
 }
 EOF
     export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
