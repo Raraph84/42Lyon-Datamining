@@ -6,4 +6,4 @@ workstation_mode{mode="default"} 1
 # HELP workstation_wallpaper metric read from /usr/share/42/prometheus/workstation_info.prom
 # TYPE workstation_wallpaper gauge
 
-workstation_wallpaper{wallpaper="default"} 1
+workstation_wallpaper{wallpaper="learning-expedition-25-juin"} 1
