@@ -1,35 +1,217 @@
 #!/bin/bash
 
 function access_denied() {
-	echo "Access Denied"
-	zenity --error --title="Forbidden" --text="Access Denied\n\n$1"
+	echo "Access Denied: $1"
+	zenity --timeout=42 --error --title="Forbidden" --text="Access Denied\n\n$1" || true
 	exit 1
+}
+
+# Helper: check if user is in whitelist
+function _is_user_authorized() {
+	local -n users_array=$1
+	for user in "${users_array[@]}"; do
+		if [ "$USER" == "$user" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+# Helper: check if user is in blacklist
+function _is_user_blacklisted() {
+	local -n users_array=$1
+	for user in "${users_array[@]}"; do
+		if [ "$USER" == "$user" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+function default_mode_authorization() {
+	local blacklisted_users=(
+			"biche"
+			"abeaudoi"
+			"achapuis"
+			"adolmazo"
+			"agopali"
+			"ahalafi"
+			"ahamdi-c"
+			"akabdoll"
+			"alaghlid"
+			"aldefras"
+			"altsang"
+			"amagomae"
+			"ameknouz"
+			"amicouli"
+			"anbahach"
+			"anhumber"
+			"antpicar"
+			"apotier"
+			"armalfer"
+			"artmeuni"
+			"axgiraud"
+			"baantoin"
+			"beastier"
+			"cbourdie"
+			"cduverne"
+			"charmart"
+			"chlcapod"
+			"clrameau"
+			"clrenaul"
+			"cpitavy"
+			"dabusuap"
+			"darival"
+			"ddavlini"
+			"debrachi"
+			"dgiraud"
+			"dgroeber"
+			"djazrine"
+			"dnebout"
+			"dvaldena"
+			"dymorich"
+			"eauffray"
+			"ebouguer"
+			"egaly"
+			"egraves"
+			"eileprea"
+			"ejean--p"
+			"ellcaste"
+			"ellhopit"
+			"elpreap"
+			"emmrober"
+			"esaillan"
+			"esveny"
+			"evergobb"
+			"fanosjea"
+			"fcasals"
+			"fhubert"
+			"fpochon"
+			"gablefeb"
+			"gbocquet"
+			"gle-mene"
+			"glevis"
+			"gucourbo"
+			"gunovell"
+			"habretag"
+			"hbaguena"
+			"hbenoit"
+			"hmilcent"
+			"ibouima"
+			"jcard"
+			"jchanel"
+			"jegerbau"
+			"jgenin"
+			"jmouaddi"
+			"jolamber"
+			"jorjoaqu"
+			"juthibau"
+			"kahamman"
+			"kdovy"
+			"ketheven"
+			"kjamalif"
+			"klobgeoi"
+			"kseny-ka"
+			"kusimsek"
+			"larban"
+			"lbastin"
+			"lemille"
+			"lesprice"
+			"lgaly"
+			"lilsi-ah"
+			"llachaiz"
+			"lmattave"
+			"lmutima"
+			"loserran"
+			"lreynaud"
+			"lrivet-p"
+			"lwilson"
+			"maseigne"
+			"mbonhomm"
+			"mcollomb"
+			"mdemeule"
+			"mestarqu"
+			"mfaubert"
+			"mguinet"
+			"mlecante"
+			"mmalandr"
+			"mmonfray"
+			"mnobre"
+			"moudin"
+			"mpicazo"
+			"mpointud"
+			"mponcet"
+			"nabenbek"
+			"nale"
+			"nathanma"
+			"ncholet"
+			"ncoppere"
+			"ncruz"
+			"nkerouan"
+			"nmondier"
+			"ocarbayo"
+			"pamilani"
+			"parostin"
+			"pclary"
+			"pgordons"
+			"phumblot"
+			"qdetry"
+			"qhubert"
+			"qmathy"
+			"qpicca"
+			"rbenameu"
+			"rbernhei"
+			"rclerc"
+			"res-saya"
+			"riestrad"
+			"rofernag"
+			"rpaganon"
+			"rrebane"
+			"rsemedo"
+			"salreja"
+			"schabrie"
+			"schatele"
+			"schiheb"
+			"shmaimsa"
+			"spizzaca"
+			"sqadwimi"
+			"stsouria"
+			"tboitel"
+			"tcantat"
+			"tdupre"
+			"tferraud"
+			"thalbart"
+			"thcornu"
+			"tibloch"
+			"tijulien"
+			"tkamenef"
+			"tle-mago"
+			"tomgarci"
+			"vaudeoud"
+			"vinda-co"
+			"vlaval-a"
+			"vruiz-hu"
+			"wboudjem"
+			"xdong"
+			"yapacahu"
+			"yaroques"
+			"yes-sabr"
+			"ygoual-b"
+			"yhusser"
+			"yoforner"
+			"zbradic"
+			"zehyildi"
+			"ztrahand"
+		)
+
+	if _is_user_blacklisted blacklisted_users; then
+		access_denied "You are not authorized to log in on this workstation."
+	fi
 }
 
 function exam_mode_authorization() {
 	if [ "$USER" != "exam" ]; then
 		access_denied "This workstation is reserved for Exam sessions."
-	fi
-}
-
-function disco_mode_authorization() {
-	local authorized_users=(
-			"cameo"
-			"goudoulf"
-			"pillo"
-			"zippy"
-		)
-	local is_authorized=false
-
-	for authorized_user in "${authorized_users[@]}"; do
-		if [ "$USER" == "$authorized_user" ]; then
-			is_authorized=true
-			break
-		fi
-	done
-
-	if [ "$is_authorized" != true ]; then
-		access_denied "This workstation is reserved for Discovery Piscine participants."
 	fi
 }
 
@@ -40,16 +222,27 @@ function maintenance_mode_authorization() {
 			"pillo"
 			"zippy"
 		)
-	local is_authorized=false
 
-	for authorized_user in "${authorized_users[@]}"; do
-		if [ "$USER" == "$authorized_user" ]; then
-			is_authorized=true
-			break
-		fi
-	done
-
-	if [ "$is_authorized" != true ]; then
+	if ! _is_user_authorized authorized_users; then
 		access_denied "This workstation is under maintenance."
+	fi
+}
+
+function disco_mode_authorization() {
+	local authorized_users=(
+			"cameo"
+			"goudoulf"
+			"pillo"
+			"zippy"
+		)
+
+	if ! _is_user_authorized authorized_users; then
+		access_denied "This workstation is reserved for Discovery Piscine participants."
+	fi
+}
+
+function piscine_mode_authorization() {
+	if ! /usr/share/42/scripts/is-pisciner.sh "$USER" >/dev/null; then
+		access_denied "This workstation is reserved for Piscine participants."
 	fi
 }

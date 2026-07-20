@@ -6,8 +6,6 @@ else
     __ISCSI__=true
 fi
 
-source "$LIB_ROOT/mount-handler"
-
 iscsi_get(){
     # LDAP search
     LDAPSEARCH=$(ldapsearch -o ldif-wrap=no -xLLL "uid=$USER" status)
@@ -46,16 +44,9 @@ iscsi_mount () {
 
     case $RET in
         "") echo "ft-iscsi successfully mount $USER home" ;;
-        "1") zenity --error --title="bocal" --text="An error occured while mounting your home, please contact a staff member." --width=600 && exit 1 ;;
-        "2")
-                local zen_val=$(DISPLAY=:0 zenity --question --title="bocal" --text="Your home is already mounted somewhere else. Continuing with the login operation could damage your home and corrupt it.\n\nDo you really want to continue the process?" && echo $?)
-                if [ "$zen_val" -eq 0 ] || [ -z "$zen_val" ]; then
-                        echo "$(dismount_home "$USER")"
-                else
-                        exit 2
-                fi
-                ;;
-        *) echo "ft-iscsi return non-zero exit code $RET" && zenity --error --title="bocal" --text="An error occured while mounting your home. (code: $RET)" --width=600 && exit $RET
+        "1") zenity --timeout=42 --error --title="bocal" --text="An error occured while mounting your home, please contact a staff member." && exit 1 ;;
+        "2") zenity --timeout=42 --error --title="bocal" --text="Your home is already mounted somewhere else.\n\nPlease logout from the other workstation first." && exit 2 ;;
+        *) echo "ft-iscsi return non-zero exit code $RET" && zenity --timeout=42 --error --title="bocal" --text="An error occured while mounting your home. (code: $RET)" && exit $RET
 
     esac
 }

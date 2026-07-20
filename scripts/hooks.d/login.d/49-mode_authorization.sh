@@ -27,16 +27,24 @@ fi
 
 # Mode specific checks
 case "$MODE" in
+default)
+	default_mode_authorization
+	;;
+
 exam)
 	exam_mode_authorization
+	;;
+
+maintenance)
+	maintenance_mode_authorization
 	;;
 
 disco)
 	disco_mode_authorization
 	;;
 
-maintenance)
-	maintenance_mode_authorization
+piscine)
+	piscine_mode_authorization
 	;;
 
 *)
