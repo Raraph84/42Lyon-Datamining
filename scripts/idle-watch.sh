@@ -48,7 +48,7 @@ while true; do
         echo "$(date '+%F %T') - ft_lock running for $(printf '%02dh %02dm %02ds' $((runtime/3600)) $(( (runtime%3600)/60 )) $((runtime%60)))" | tee -a "$LOG_FILE"
     fi
 
-    if [[ "$runtime" -ge $((KILL_LIMIT - IDLE_LIMIT)) || "$idle_ms" -ge $(((KILL_LIMIT - IDLE_LIMIT) * 1000)) ]]; then
+    if [[ (-n "$PID" && "$runtime" -ge $((KILL_LIMIT - IDLE_LIMIT))) || "$idle_ms" -ge $(((KILL_LIMIT - IDLE_LIMIT) * 1000)) ]]; then
         echo "$(date '+%F %T') - Idle or ft_lock exceeds limit, terminating user $USER_SESSION" | tee -a "$LOG_FILE"
         loginctl terminate-user "$USER_SESSION"
     fi

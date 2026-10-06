@@ -35,6 +35,10 @@ exam)
 	exam_mode_authorization
 	;;
 
+event)
+	event_mode_authorization
+	;;
+
 maintenance)
 	maintenance_mode_authorization
 	;;
